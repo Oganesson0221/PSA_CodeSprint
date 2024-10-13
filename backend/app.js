@@ -22,9 +22,10 @@ const employeeSchema = new mongoose.Schema({
   name: String,
   email: String,
   wellBeingData: {
-    mentalHealthCondition: { type: String, required: true }, // e.g., "Low", "Medium", "High"
-    physicalActivity: { type: String, required: true }, // Change to String
-    sleepQuality: { type: String, required: true }, // Change to String
+    mentalHealthCondition: String, // Adjusting type to match input
+    physicalActivity: String, // Adjusting type to match input
+    sleepQuality: String, // Adjusting type to match input
+    stressLevel: String, // Adding stress level
   },
   recommendations: [String],
 });
@@ -45,11 +46,12 @@ app.post("/api/data/collect", async (req, res) => {
     const employeeData = new Employee(req.body);
     await employeeData.save();
 
-    // Prepare data for prediction (removed Stress_Level)
+    // Prepare data for prediction
     const predictionData = {
       Mental_Health_Condition: req.body.wellBeingData.mentalHealthCondition,
       Physical_Activity: req.body.wellBeingData.physicalActivity,
       Sleep_Quality: req.body.wellBeingData.sleepQuality,
+      Stress_Level: req.body.wellBeingData.stressLevel, // Assuming this field is provided
     };
 
     // Send data to the model for prediction

@@ -142,6 +142,24 @@ const Dashboard = () => {
           </div>
         ))}
       </div>
+
+      {/* Aesthetic Legend */}
+      <div className="legend">
+        <h3>Stress Level Legend</h3>
+        <div className="legend-item">
+          <span className="legend-color" style={{ backgroundColor: "#6CCB3F" }}></span>
+          <span>Low Stress (1-2)</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-color" style={{ backgroundColor: "#FFD700" }}></span>
+          <span>Moderate Stress (3-5)</span>
+        </div>
+        <div className="legend-item">
+          <span className="legend-color" style={{ backgroundColor: "#FF5733" }}></span>
+          <span>High Stress (6+)</span>
+        </div>
+      </div>
+
     </div>
   );
 };

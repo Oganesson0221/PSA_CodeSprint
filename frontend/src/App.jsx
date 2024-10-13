@@ -1,28 +1,38 @@
-// src/App.jsx
 import React, { useState } from "react";
 import axios from "axios";
-import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
-import "./WellBeingPlatform.css"; // Main styling for the app
-import Dashboard from "./Dashboard"; // Importing the Dashboard component
+import "./EmployeeForm.css"; // Import the CSS file
 
-function App() {
+const EmployeeForm = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    workHours: "",
-    workLocation: "",
-    sleepQuality: 5, // Default value for slider
-    physicalActivity: "",
+    wellBeingData: {
+      mentalHealthCondition: "None",
+      physicalActivity: "None",
+      sleepQuality: "Poor",
+    },
   });
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
+
+  const [predictions, setPredictions] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
+
+    if (name.startsWith("wellBeingData")) {
+      const field = name.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+        wellBeingData: {
+          ...prev.wellBeingData,
+          [field]: value,
+        },
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -32,138 +42,120 @@ function App() {
         "http://localhost:5050/api/data/collect",
         formData
       );
-      setResult(response.data);
-      setError("");
+      setPredictions(response.data.predictions);
+      alert(response.data.message);
     } catch (error) {
-      setError(error.response ? error.response.data : error.message);
+      console.error(
+        "Error submitting form:",
+        error.response ? error.response.data : error
+      );
+      alert(
+        "Error submitting form: " +
+          (error.response ? error.response.data.message : error.message)
+      );
     }
   };
 
-  return (
-    <Router>
-      <div className="app-container">
-        {/* Updated navigation bar */}
-        <nav className="navigation">
-          <Link to="/" className="nav-link">
-            <span role="img" aria-label="Home">
-              🏠
-            </span>
-            Home
-          </Link>
-          <Link to="/dashboard" className="nav-link">
-            <span role="img" aria-label="Dashboard">
-              📊
-            </span>
-            Dashboard
-          </Link>
-        </nav>
+  // Function to render prediction output
+  const renderPredictions = () => {
+    if (!predictions) return null;
 
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <div className="form-container">
-                <section className="hero">
-                  <h1>AI-Enhanced Well-being Platform</h1>
-                  <p>
-                    Identify patterns of stress and receive personalized well-being
-                    recommendations.
-                  </p>
-                </section>
-                <section className="data-collection">
-                  <h2>Well-Being Survey</h2>
-                  <form onSubmit={handleSubmit} className="well-being-form">
-                    <input
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      placeholder="Your Name"
-                      type="text"
-                      required
-                    />
-                    <input
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      placeholder="Your Email"
-                      type="email"
-                      required
-                    />
-                    <input
-                      name="workHours"
-                      value={formData.workHours}
-                      onChange={handleChange}
-                      placeholder="Number of Hours Worked"
-                      type="number"
-                      required
-                    />
-                    <select
-                      name="workLocation"
-                      value={formData.workLocation}
-                      onChange={handleChange}
-                      required
-                    >
-                      <option value="" disabled>
-                        Select Work Location
-                      </option>
-                      <option value="onsite">Onsite</option>
-                      <option value="remote">Remote</option>
-                      <option value="hybrid">Hybrid</option>
-                    </select>
+    const { predicted_class, predicted_label } = predictions;
 
-                    {/* Sleep Quality as a slider */}
-                    <label htmlFor="sleepQuality">Sleep Quality (1-10)</label>
-                    <input
-                      name="sleepQuality"
-                      value={formData.sleepQuality}
-                      onChange={handleChange}
-                      type="range"
-                      min="1"
-                      max="10"
-                      required
-                    />
-                    <span>{formData.sleepQuality}</span>
-
-                    {/* Physical Activity Dropdown */}
-                    <label htmlFor="physicalActivity">Physical Activity</label>
-                    <select
-                      name="physicalActivity"
-                      value={formData.physicalActivity}
-                      onChange={handleChange}
-                      required
-                    >
-                      <option value="" disabled>
-                        Select Physical Activity
-                      </option>
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="none">None</option>
-                    </select>
-
-                    <button type="submit" className="submit-btn">
-                      Submit
-                    </button>
-                  </form>
-                  {result && (
-                    <div className="result">
-                      <p>{result.message}</p>
-                      <p>
-                        Recommendations:{" "}
-                        {result.employeeData.recommendations.join(", ")}
-                      </p>
-                    </div>
-                  )}
-                  {error && <p className="error">Error: {error}</p>}
-                </section>
-              </div>
-            }
-          />
-
-          <Route path="/dashboard" element={<Dashboard />} />
-        </Routes>
+    return (
+      <div className="prediction">
+        <h4>Predicted Well-Being Class</h4>
+        <div className={`prediction-result ${predicted_label.toLowerCase()}`}>
+          <p>
+            <strong>Class ID:</strong> {predicted_class[0]}
+          </p>
+          <p>
+            <strong>Label:</strong> {predicted_label}
+          </p>
+        </div>
       </div>
-    </Router>
-  );
-}
+    );
+  };
 
-export default App;
+  return (
+    <form onSubmit={handleSubmit}>
+      <h2>Employee Data Collection</h2>
+
+      <label>
+        Name:
+        <input
+          type="text"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+        />
+      </label>
+
+      <label>
+        Email:
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+        />
+      </label>
+
+      <h3>Well-Being Data</h3>
+      <label>
+        Mental Health Condition:
+        <select
+          name="wellBeingData.mentalHealthCondition"
+          value={formData.wellBeingData.mentalHealthCondition}
+          onChange={handleChange}
+          required
+        >
+          <option value="None">None</option>
+          <option value="Depression">Depression</option>
+          <option value="Anxiety">Anxiety</option>
+          <option value="Burnout">Burnout</option>
+          {/* Add other conditions as necessary */}
+        </select>
+      </label>
+
+      <label>
+        Physical Activity:
+        <select
+          name="wellBeingData.physicalActivity"
+          value={formData.wellBeingData.physicalActivity}
+          onChange={handleChange}
+          required
+        >
+          <option value="None">None</option>
+          <option value="Weekly">Weekly</option>
+          <option value="Daily">Daily</option>
+          <option value="Rarely">Rarely</option>
+          {/* Add other activities as necessary */}
+        </select>
+      </label>
+
+      <label>
+        Sleep Quality:
+        <select
+          name="wellBeingData.sleepQuality"
+          value={formData.wellBeingData.sleepQuality}
+          onChange={handleChange}
+          required
+        >
+          <option value="Poor">Poor</option>
+          <option value="Average">Average</option>
+          <option value="Good">Good</option>
+          {/* Add other qualities as necessary */}
+        </select>
+      </label>
+
+      <button type="submit">Submit</button>
+
+      {renderPredictions()}
+    </form>
+  );
+};
+
+export default EmployeeForm;

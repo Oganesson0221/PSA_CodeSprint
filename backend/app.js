@@ -28,8 +28,24 @@ const employeeSchema = new mongoose.Schema({
   recommendations: [String],
 });
 
-// Create a Model
+// Define a Schema for daily stress entries
+const stressEntrySchema = new mongoose.Schema({
+  date: {
+    type: Date,
+    required: true,
+    unique: true,
+  },
+  stressLevel: {
+    type: Number,
+    min: 1,
+    max: 10,
+    required: true,
+  },
+});
+
+// Create Models
 const Employee = mongoose.model("Employee", employeeSchema);
+const StressEntry = mongoose.model("StressEntry", stressEntrySchema);
 
 // Rate limiting middleware
 const apiLimiter = rateLimit({
@@ -44,10 +60,6 @@ app.post("/api/data/collect", async (req, res) => {
     const employeeData = new Employee(req.body);
     await employeeData.save();
 
-    // Here you can also add your machine learning model to analyze data
-    // and provide recommendations based on the collected data
-    // const recommendations = await analyzeData(employeeData);
-
     res.json({ message: "Data collected successfully", employeeData });
   } catch (error) {
     res
@@ -56,9 +68,43 @@ app.post("/api/data/collect", async (req, res) => {
   }
 });
 
-// Placeholder for machine learning analysis (implement your ML model logic here)
+// Endpoint to collect daily stress data
+app.post("/api/data/stress", async (req, res) => {
+  try {
+    const { date, stressLevel } = req.body;
+
+    const stressEntry = new StressEntry({
+      date: new Date(date),
+      stressLevel,
+    });
+
+    await stressEntry.save();
+    res.json({ message: "Stress entry added successfully", stressEntry });
+  } catch (error) {
+    res.status(500).json({ message: "Error adding stress entry", details: error.message });
+  }
+});
+
+// Endpoint to retrieve daily stress entries
+app.get('/api/data/entries', async (req, res) => {
+  const { month, year } = req.query;
+
+  try {
+    const entries = await StressEntry.find({
+      date: {
+        $gte: new Date(year, month - 1, 1),
+        $lt: new Date(year, month, 1),
+      },
+    });
+
+    res.json(entries);
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving entries", details: error.message });
+  }
+});
+
+// Placeholder for machine learning analysis
 const analyzeData = async (employeeData) => {
-  // ML logic to analyze employee data and return recommendations
   return ["Take a break", "Join a mindfulness session"];
 };
 

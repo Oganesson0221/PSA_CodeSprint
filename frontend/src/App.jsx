@@ -6,9 +6,10 @@ function App() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    workActivity: {},
-    surveyResponses: {},
-    wellBeingData: {},
+    workHours: "",
+    workLocation: "",
+    sleepQuality: 5, // Default value for slider
+    physicalActivity: "",
   });
   const [result, setResult] = useState(null);
   const [error, setError] = useState("");
@@ -36,7 +37,7 @@ function App() {
   };
 
   return (
-    <div>
+    <div className="form-container">
       <section className="hero">
         <h1>AI-Enhanced Well-being Platform</h1>
         <p>
@@ -45,12 +46,13 @@ function App() {
         </p>
       </section>
       <section className="data-collection">
-        <form onSubmit={handleSubmit}>
+        <h2>Well-Being Survey</h2>
+        <form onSubmit={handleSubmit} className="well-being-form">
           <input
             name="name"
             value={formData.name}
             onChange={handleChange}
-            placeholder="Name"
+            placeholder="Your Name"
             type="text"
             required
           />
@@ -58,31 +60,57 @@ function App() {
             name="email"
             value={formData.email}
             onChange={handleChange}
-            placeholder="Email"
+            placeholder="Your Email"
             type="email"
             required
           />
-          <textarea
-            name="workActivity"
-            value={JSON.stringify(formData.workActivity)}
+          <input
+            name="workHours"
+            value={formData.workHours}
             onChange={handleChange}
-            placeholder="Work Activity Data (JSON format)"
+            placeholder="Number of Hours Worked"
+            type="number"
             required
           />
-          <textarea
-            name="surveyResponses"
-            value={JSON.stringify(formData.surveyResponses)}
+          <select
+            name="workLocation"
+            value={formData.workLocation}
             onChange={handleChange}
-            placeholder="Survey Responses (JSON format)"
+            required
+          >
+            <option value="" disabled>Select Work Location</option>
+            <option value="onsite">Onsite</option>
+            <option value="remote">Remote</option>
+            <option value="hybrid">Hybrid</option>
+          </select>
+
+          {/* Sleep Quality as a slider */}
+          <label htmlFor="sleepQuality">Sleep Quality (1-10)</label>
+          <input
+            name="sleepQuality"
+            value={formData.sleepQuality}
+            onChange={handleChange}
+            type="range"
+            min="1"
+            max="10"
             required
           />
-          <textarea
-            name="wellBeingData"
-            value={JSON.stringify(formData.wellBeingData)}
+          <span>{formData.sleepQuality}</span>
+
+          {/* Physical Activity Dropdown */}
+          <label htmlFor="physicalActivity">Physical Activity</label>
+          <select
+            name="physicalActivity"
+            value={formData.physicalActivity}
             onChange={handleChange}
-            placeholder="Well-being Data (JSON format)"
             required
-          />
+          >
+            <option value="" disabled>Select Physical Activity</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="none">None</option>
+          </select>
+
           <button type="submit" className="submit-btn">
             Submit
           </button>

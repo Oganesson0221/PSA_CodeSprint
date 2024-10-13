@@ -7,7 +7,6 @@ const mongoose = require("mongoose");
 
 const PORT = process.env.PORT || 5050;
 const app = express();
-const API_KEY = process.env.EXCHANGE_RATE_API_KEY;
 
 app.use(express.json());
 app.use(cors({ origin: ["http://localhost:5173"] }));
@@ -22,9 +21,11 @@ mongoose.connect(process.env.MONGODB_URI, {
 const employeeSchema = new mongoose.Schema({
   name: String,
   email: String,
-  workActivity: Object,
-  surveyResponses: Object,
-  wellBeingData: Object,
+  wellBeingData: {
+    mentalHealthCondition: { type: String, required: true }, // e.g., "Low", "Medium", "High"
+    physicalActivity: { type: String, required: true }, // Change to String
+    sleepQuality: { type: String, required: true }, // Change to String
+  },
   recommendations: [String],
 });
 
@@ -44,11 +45,21 @@ app.post("/api/data/collect", async (req, res) => {
     const employeeData = new Employee(req.body);
     await employeeData.save();
 
-    // Here you can also add your machine learning model to analyze data
-    // and provide recommendations based on the collected data
-    // const recommendations = await analyzeData(employeeData);
+    // Prepare data for prediction (removed Stress_Level)
+    const predictionData = {
+      Mental_Health_Condition: req.body.wellBeingData.mentalHealthCondition,
+      Physical_Activity: req.body.wellBeingData.physicalActivity,
+      Sleep_Quality: req.body.wellBeingData.sleepQuality,
+    };
 
-    res.json({ message: "Data collected successfully", employeeData });
+    // Send data to the model for prediction
+    const predictions = await analyzeData(predictionData);
+
+    res.json({
+      message: "Data collected successfully",
+      employeeData,
+      predictions,
+    });
   } catch (error) {
     res
       .status(500)
@@ -56,11 +67,18 @@ app.post("/api/data/collect", async (req, res) => {
   }
 });
 
-// Placeholder for machine learning analysis (implement your ML model logic here)
 const analyzeData = async (employeeData) => {
-  // ML logic to analyze employee data and return recommendations
-  return ["Take a break", "Join a mindfulness session"];
+  try {
+    const response = await axios.post(
+      "http://localhost:5003/predict",
+      employeeData
+    );
+    return response.data; // Get predictions from the model
+  } catch (error) {
+    console.error("Error in prediction:", error.message);
+    return { error: "Prediction service unavailable" }; // Handle error
+  }
 };
 
 // Start the server
-app.listen(PORT, () => console.log(`The PORT is running on PORT ${PORT}`));
+app.listen(PORT, () => console.log(`The server is running on PORT ${PORT}`));
